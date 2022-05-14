@@ -2,7 +2,12 @@
 ##dosyalar değişken olarak çağrılacak.
 
 #####monitor.cfg den ipleri süz--
-while read line;do echo "$line"|cut -d"|" -f2>> /tmp/ip.list; done<monitor.cfg
+while read line;do 
+if [[ $line =~ ^"#" ]]
+ then
+  continue 
+  fi  
+  echo "$line"|cut -d"|" -f2>> /tmp/ip.list; done<monitor.cfg
 #####fpinge listeyi okut sonuçları pingresult'a yaz.
 fping -C 3 -i5 -r2 -t 1000 -B4.0 -p 20000 -q -f /tmp/ip.list 2> pingresult.txt
 ####response timeları ilgili hostun adıyla oluşturulan dosyaya ekle
@@ -23,20 +28,53 @@ cat <<EOF >trial.html
 <div id="ana_div">
 EOF
    while read line; do
+   if [[ $line =~ ^"#" ]]
+ then
+  continue 
+  fi  
+   ip=$(echo "$line"|cut -d"|" -f2);
+   des=$(echo "$line"|cut -d"|" -f1);
+   pingtimes=$(tail -1 /root/Desktop/data/$ip);
+   dashcount=0;
+   if [[ $pingtimes =~ "-" ]] 
+   then
+   dashcount=$(echo $pingtimes | grep -o "-" |wc -l);
+   cr=3;
    
-   ip=$(echo "$line"|cut -d"|" -f2)
-   des=$(echo "$line"|cut -d"|" -f1)
-   pingtimes=$(tail -1 /root/Desktop/data/$ip)
-   
+    if [[ $dashcount =~ ("1"|"2") ]] 
+    then
+        #bu kısım fonksiyon olarak yapılabilir kırmızı() gibi----
+        
    echo "
-    <div class="box" id="div">
-		<div class="left1"> $des</div> 
-		<div class="right1 c00ff00 ">$zaman </div>
-		<div class="left2"> $ip</div>   
-		<div class="right2">$pingtimes</div>   
+    <div class="box" id="div">   
+		<div class=\"bold left1\"> $des</div> 
+		<div class=\"right1 c1\">$zaman </div>
+		<div class=left2> $ip</div>   
+		<div class=\"right2 cff7f00\">$pingtimes</div>   
 		  </div>
      ">>trial.html
-          done<monitor.cfg
+     else 
+        echo "
+    <div class=\"box\" id="div">   
+		<div class=\"bold left1\"> $des</div> 
+		<div class=right1>$zaman </div>
+		<div class=left2> $ip</div>   
+		<div class=\"right2 cff0000\">$pingtimes</div>   
+		  </div>
+     ">>trial.html
+     fi
+     else 
+     echo "
+    <div class="box" id="div">  
+		<div class=\"bold left1\"> $des</div> 
+		<div class=right1>$zaman </div>
+		<div class=left2> $ip</div>   
+		<div class=\"right2 c00ff00\">$pingtimes</div>   
+		  </div>
+     ">>trial.html
+     fi
+     
+        done <monitor.cfg
  echo "</div>
 <!--#Ana Div Bitis-->
 </head>
